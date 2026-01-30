@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import AppShell from "@/components/app-shell";
+import { AuthProvider } from "@/components/auth-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
@@ -43,7 +44,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${jakartaSans.variable} ${fraunces.variable}`}>
         <ThemeProvider>
-          <AppShell navItems={navItems}>{children}</AppShell>
+          <AuthProvider>
+            <AppShell navItems={navItems}>{children}</AppShell>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
