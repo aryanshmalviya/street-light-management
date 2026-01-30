@@ -103,7 +103,7 @@ export default function FilterBar({
           onChange={(event) => onChange({ ...filters, endDate: event.target.value })}
         />
       </label>
-
+      
       <div className="filter-actions">
         <button type="button" className="ghost-btn" onClick={onReset} disabled={!onReset}>
           Reset
