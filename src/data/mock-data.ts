@@ -1,322 +1,159 @@
-export const mockData = {
-  zones: [
-    {
-      zoneId: "NH44-Z01",
-      name: "NH44 Toll Plaza A to B",
-      lengthKm: 12.4,
-      latitude: 28.6139,
-      longitude: 77.209,
-      poles: 8,
-    },
-    {
-      zoneId: "NH44-Z02",
-      name: "NH44 Plaza B to C",
-      lengthKm: 9.2,
-      latitude: 28.6025,
-      longitude: 77.1938,
-      poles: 6,
-    },
-  ],
-  assets: [
-    {
-      poleId: "NH44-P001",
-      zoneId: "NH44-Z01",
-      gps: { lat: 28.6201, lng: 77.2142 },
-      fixtureType: "LED-120W",
-      controllerId: "CTRL-001",
-      installedOn: "2024-06-10",
-      status: "ACTIVE",
-    },
-    {
-      poleId: "NH44-P002",
-      zoneId: "NH44-Z01",
-      gps: { lat: 28.6215, lng: 77.215 },
-      fixtureType: "LED-120W",
-      controllerId: "CTRL-002",
-      installedOn: "2024-06-12",
-      status: "ACTIVE",
-    },
-    {
-      poleId: "NH44-P003",
-      zoneId: "NH44-Z01",
-      gps: { lat: 28.623, lng: 77.2161 },
-      fixtureType: "LED-120W",
-      controllerId: "CTRL-003",
-      installedOn: "2024-06-14",
-      status: "ACTIVE",
-    },
-    {
-      poleId: "NH44-P004",
-      zoneId: "NH44-Z01",
-      gps: { lat: 28.6244, lng: 77.2175 },
-      fixtureType: "LED-90W",
-      controllerId: "CTRL-004",
-      installedOn: "2024-07-02",
-      status: "ACTIVE",
-    },
-    {
-      poleId: "NH44-P005",
-      zoneId: "NH44-Z01",
-      gps: { lat: 28.626, lng: 77.2188 },
-      fixtureType: "LED-90W",
-      controllerId: "CTRL-005",
-      installedOn: "2024-07-06",
-      status: "ACTIVE",
-    },
-    {
-      poleId: "NH44-P006",
-      zoneId: "NH44-Z01",
-      gps: { lat: 28.6274, lng: 77.2201 },
-      fixtureType: "LED-120W",
-      controllerId: "CTRL-006",
-      installedOn: "2024-07-10",
-      status: "ACTIVE",
-    },
-    {
-      poleId: "NH44-P101",
-      zoneId: "NH44-Z02",
-      gps: { lat: 28.6041, lng: 77.1952 },
-      fixtureType: "LED-120W",
-      controllerId: "CTRL-101",
-      installedOn: "2024-08-01",
-      status: "ACTIVE",
-    },
-    {
-      poleId: "NH44-P102",
-      zoneId: "NH44-Z02",
-      gps: { lat: 28.6055, lng: 77.1963 },
-      fixtureType: "LED-90W",
-      controllerId: "CTRL-102",
-      installedOn: "2024-08-04",
-      status: "ACTIVE",
-    },
-    {
-      poleId: "NH44-P103",
-      zoneId: "NH44-Z02",
-      gps: { lat: 28.6069, lng: 77.1976 },
-      fixtureType: "LED-90W",
-      controllerId: "CTRL-103",
-      installedOn: "2024-08-08",
-      status: "ACTIVE",
-    },
-    {
-      poleId: "NH44-P104",
-      zoneId: "NH44-Z02",
-      gps: { lat: 28.6083, lng: 77.1988 },
-      fixtureType: "LED-120W",
-      controllerId: "CTRL-104",
-      installedOn: "2024-08-12",
-      status: "ACTIVE",
-    },
-  ],
-  controllers: [
-    {
-      controllerId: "CTRL-001",
-      firmware: "v1.2.3",
-      lastSeen: "2026-01-27T10:15:00Z",
-      connectivity: "4G",
-    },
-    {
-      controllerId: "CTRL-002",
-      firmware: "v1.2.3",
-      lastSeen: "2026-01-27T10:15:20Z",
-      connectivity: "4G",
-    },
-    {
-      controllerId: "CTRL-003",
-      firmware: "v1.2.2",
-      lastSeen: "2026-01-27T10:14:50Z",
-      connectivity: "NB-IoT",
-    },
-    {
-      controllerId: "CTRL-004",
-      firmware: "v1.2.3",
-      lastSeen: "2026-01-27T10:15:10Z",
-      connectivity: "4G",
-    },
-    {
-      controllerId: "CTRL-005",
-      firmware: "v1.2.2",
-      lastSeen: "2026-01-27T10:14:40Z",
-      connectivity: "NB-IoT",
-    },
-    {
-      controllerId: "CTRL-006",
-      firmware: "v1.2.3",
-      lastSeen: "2026-01-27T10:15:30Z",
-      connectivity: "4G",
-    },
-    {
-      controllerId: "CTRL-101",
-      firmware: "v1.2.3",
-      lastSeen: "2026-01-27T10:14:20Z",
-      connectivity: "4G",
-    },
-    {
-      controllerId: "CTRL-102",
-      firmware: "v1.2.1",
-      lastSeen: "2026-01-27T10:15:45Z",
-      connectivity: "NB-IoT",
-    },
-    {
-      controllerId: "CTRL-103",
-      firmware: "v1.2.3",
-      lastSeen: "2026-01-27T10:15:05Z",
-      connectivity: "4G",
-    },
-    {
-      controllerId: "CTRL-104",
-      firmware: "v1.2.3",
-      lastSeen: "2026-01-27T10:15:55Z",
-      connectivity: "4G",
-    },
-  ],
-  telemetry: [
-    {
-      poleId: "NH44-P001",
-      timestamp: "2026-01-27T10:15:00Z",
-      state: "ON",
-      voltage: 228.4,
-      current: 0.52,
-      powerW: 118.7,
-      energyKwh: 2.34,
-      ambientLux: 12,
-      temperatureC: 32.1,
-    },
-    {
-      poleId: "NH44-P002",
-      timestamp: "2026-01-27T10:15:10Z",
-      state: "FAULT",
-      faultCode: "LAMP_FAILURE",
-      voltage: 228.1,
-      current: 0.02,
-      powerW: 4.1,
-      energyKwh: 2.1,
-      ambientLux: 14,
-      temperatureC: 31.8,
-    },
-    {
-      poleId: "NH44-P003",
-      timestamp: "2026-01-27T10:14:50Z",
-      state: "DIMMED",
-      dimmingLevel: 60,
-      voltage: 227.5,
-      current: 0.34,
-      powerW: 78.4,
-      energyKwh: 1.98,
-      ambientLux: 18,
-      temperatureC: 31.6,
-    },
-    {
-      poleId: "NH44-P004",
-      timestamp: "2026-01-27T10:14:40Z",
-      state: "ON",
-      voltage: 229.2,
-      current: 0.49,
-      powerW: 112.5,
-      energyKwh: 2.2,
-      ambientLux: 15,
-      temperatureC: 31.7,
-    },
-    {
-      poleId: "NH44-P005",
-      timestamp: "2026-01-27T10:14:30Z",
-      state: "OFF",
-      voltage: 0,
-      current: 0,
-      powerW: 0,
-      energyKwh: 1.74,
-      ambientLux: 48,
-      temperatureC: 30.9,
-    },
-    {
-      poleId: "NH44-P006",
-      timestamp: "2026-01-27T10:15:20Z",
-      state: "ON",
-      voltage: 228.9,
-      current: 0.51,
-      powerW: 116.1,
-      energyKwh: 2.4,
-      ambientLux: 13,
-      temperatureC: 31.9,
-    },
-    {
-      poleId: "NH44-P101",
-      timestamp: "2026-01-27T10:14:10Z",
-      state: "DIMMED",
-      dimmingLevel: 70,
-      voltage: 228.2,
-      current: 0.37,
-      powerW: 82.4,
-      energyKwh: 1.88,
-      ambientLux: 20,
-      temperatureC: 31.2,
-    },
-    {
-      poleId: "NH44-P102",
-      timestamp: "2026-01-27T10:15:05Z",
-      state: "ON",
-      voltage: 229.1,
-      current: 0.48,
-      powerW: 110.9,
-      energyKwh: 2.05,
-      ambientLux: 16,
-      temperatureC: 31.5,
-    },
-    {
-      poleId: "NH44-P103",
-      timestamp: "2026-01-27T10:14:55Z",
-      state: "ON",
-      voltage: 228.7,
-      current: 0.5,
-      powerW: 114.3,
-      energyKwh: 2.16,
-      ambientLux: 17,
-      temperatureC: 31.4,
-    },
-    {
-      poleId: "NH44-P104",
-      timestamp: "2026-01-27T10:15:35Z",
-      state: "FAULT",
-      faultCode: "DRIVER_FAILURE",
-      voltage: 228.6,
-      current: 0.03,
-      powerW: 5.2,
-      energyKwh: 1.92,
-      ambientLux: 19,
-      temperatureC: 31.1,
-    },
-  ],
-  faults: [
-    {
-      faultId: "F-1001",
-      poleId: "NH44-P002",
-      zoneId: "NH44-Z01",
-      faultCode: "LAMP_FAILURE",
-      severity: "HIGH",
-      detectedAt: "2026-01-27T10:15:10Z",
-      status: "OPEN",
-    },
-    {
-      faultId: "F-1002",
-      poleId: "NH44-P104",
-      zoneId: "NH44-Z02",
-      faultCode: "DRIVER_FAILURE",
-      severity: "MEDIUM",
-      detectedAt: "2026-01-27T10:15:35Z",
-      status: "OPEN",
-    },
-    {
-      faultId: "F-0995",
-      poleId: "NH44-P005",
-      zoneId: "NH44-Z01",
-      faultCode: "POWER_DROP",
-      severity: "LOW",
-      detectedAt: "2026-01-26T21:35:00Z",
-      status: "RESOLVED",
-      resolvedAt: "2026-01-26T23:10:00Z",
-    },
-  ],
+import type { Asset, Controller, DataStore, Fault, Telemetry, Zone } from "@/types/data";
+const METERS_PER_DEG_LAT = 111_320;
+
+const buildLinePoints = (
+  latitude: number,
+  longitude: number,
+  lengthMeters: number,
+  count: number,
+  bearingDeg: number
+) => {
+  const latRad = (latitude * Math.PI) / 180;
+  const bearingRad = (bearingDeg * Math.PI) / 180;
+  const spacing = count > 1 ? lengthMeters / (count - 1) : 0;
+  const startOffset = -((count - 1) / 2) * spacing;
+
+  return Array.from({ length: count }, (_, index) => {
+    const offset = startOffset + index * spacing;
+    const latOffset = (offset * Math.cos(bearingRad)) / METERS_PER_DEG_LAT;
+    const lngOffset =
+      (offset * Math.sin(bearingRad)) / (METERS_PER_DEG_LAT * Math.max(0.0001, Math.cos(latRad)));
+    return {
+      lat: latitude + latOffset,
+      lng: longitude + lngOffset,
+    };
+  });
+};
+
+const pad3 = (value: number) => String(value).padStart(3, "0");
+
+const buildAssets = (zones: Zone[]) => {
+  const fixtureTypes = ["LED-120W", "LED-90W"];
+  const bearings = [35, 115];
+  return zones.flatMap((zone, zoneIndex) => {
+    const count = zone.poles;
+    const start = zoneIndex === 0 ? 1 : 101;
+    const lineLengthMeters = zone.lengthKm * 1000;
+    const points = buildLinePoints(
+      zone.latitude,
+      zone.longitude,
+      lineLengthMeters,
+      count,
+      bearings[zoneIndex % bearings.length]
+    );
+
+    return Array.from({ length: count }, (_, index) => {
+      const poleNumber = start + index;
+      const gps = points[index];
+      return {
+        poleId: `NH44-P${pad3(poleNumber)}`,
+        zoneId: zone.zoneId,
+        gps,
+        fixtureType: fixtureTypes[(zoneIndex + index) % fixtureTypes.length],
+        controllerId: `CTRL-${pad3(poleNumber)}`,
+        installedOn: `2024-07-${pad3(2 + index).slice(-2)}`,
+        status: "ACTIVE",
+      } satisfies Asset;
+    });
+  });
+};
+
+const buildTelemetry = (assets: Asset[], faults: Fault[]) => {
+  const openFaults = new Map(
+    faults.filter((fault) => fault.status === "OPEN").map((fault) => [fault.poleId, fault])
+  );
+
+  return assets.map((asset, index) => {
+    const basePower = 100 + (index % 5) * 6;
+    const fault = openFaults.get(asset.poleId);
+    const state = fault ? "FAULT" : index % 3 === 0 ? "DIMMED" : "ON";
+    const powerW = fault ? 4 + (index % 3) : basePower;
+    const current = Number((powerW / 230).toFixed(2));
+    return {
+      poleId: asset.poleId,
+      timestamp: `2026-01-27T10:15:${pad3(10 + index).slice(-2)}Z`,
+      state,
+      voltage: 228.5 + (index % 4) * 0.3,
+      current,
+      powerW,
+      energyKwh: Number((1.8 + (index % 6) * 0.12).toFixed(2)),
+      ambientLux: 12 + (index % 10),
+      temperatureC: 30.8 + (index % 6) * 0.3,
+      faultCode: fault?.faultCode,
+    } satisfies Telemetry;
+  });
+};
+
+const zones: Zone[] = [
+  {
+    zoneId: "NH44-Z01",
+    name: "NH44 Toll Plaza A to B",
+    lengthKm: 10,
+    latitude: 28.6139,
+    longitude: 77.209,
+    poles: 8,
+  },
+  {
+    zoneId: "NH44-Z02",
+    name: "NH44 Plaza B to C",
+    lengthKm: 10,
+    latitude: 28.6433,
+    longitude: 77.2917,
+    poles: 6,
+  },
+];
+
+const assets = buildAssets(zones);
+
+const faults: Fault[] = [
+  {
+    faultId: "F-1001",
+    poleId: "NH44-P002",
+    zoneId: "NH44-Z01",
+    faultCode: "LAMP_FAILURE",
+    severity: "HIGH",
+    detectedAt: "2026-01-27T10:15:10Z",
+    status: "OPEN",
+  },
+  {
+    faultId: "F-1002",
+    poleId: "NH44-P104",
+    zoneId: "NH44-Z02",
+    faultCode: "DRIVER_FAILURE",
+    severity: "MEDIUM",
+    detectedAt: "2026-01-27T10:15:35Z",
+    status: "OPEN",
+  },
+  {
+    faultId: "F-0995",
+    poleId: "NH44-P005",
+    zoneId: "NH44-Z01",
+    faultCode: "POWER_DROP",
+    severity: "LOW",
+    detectedAt: "2026-01-26T21:35:00Z",
+    status: "RESOLVED",
+    resolvedAt: "2026-01-26T23:10:00Z",
+  },
+];
+
+const controllers = assets.map((asset, index) => {
+  const connectivity = index % 3 === 0 ? "NB-IoT" : "4G";
+  return {
+    controllerId: asset.controllerId,
+    firmware: index % 4 === 0 ? "v1.2.2" : "v1.2.3",
+    lastSeen: `2026-01-27T10:15:${pad3(20 + index).slice(-2)}Z`,
+    connectivity,
+  } satisfies Controller;
+});
+
+const telemetry = buildTelemetry(assets, faults);
+
+export const mockData: DataStore = {
+  zones,
+  assets,
+  controllers,
+  telemetry,
+  faults,
   maintenanceTickets: [
     {
       ticketId: "MT-501",
@@ -356,68 +193,58 @@ export const mockData = {
       totalEnergyKwh: 35.4,
       baselineKwh: 48,
       savingsKwh: 12.6,
-      co2SavedKg: 10.3,
+      co2SavedKg: 8.7,
     },
     {
       zoneId: "NH44-Z02",
       date: "2026-01-27",
       totalEnergyKwh: 28.9,
-      baselineKwh: 39,
-      savingsKwh: 10.1,
-      co2SavedKg: 8.4,
+      baselineKwh: 36,
+      savingsKwh: 7.1,
+      co2SavedKg: 5.4,
     },
   ],
   automationRules: [
     {
-      ruleId: "R-001",
+      ruleId: "AR-01",
       zoneId: "NH44-Z01",
-      name: "Night Auto ON",
-      condition: "ambientLux < 30",
-      action: "TURN_ON",
+      name: "Night Dimming",
+      condition: "After 11 PM",
+      action: "Dim to 60%",
       active: true,
     },
     {
-      ruleId: "R-002",
-      zoneId: "NH44-Z01",
-      name: "Late Night Dimming",
-      condition: "time between 01:00-04:30",
-      action: "DIM to 60%",
-      active: true,
-    },
-    {
-      ruleId: "R-003",
+      ruleId: "AR-02",
       zoneId: "NH44-Z02",
-      name: "Dawn Transition",
-      condition: "ambientLux > 40",
-      action: "TURN_OFF",
+      name: "Traffic Surge",
+      condition: "Traffic > 80%",
+      action: "Boost to 100%",
       active: true,
     },
   ],
   users: [
     {
-      userId: "U-001",
-      name: "NHAI Admin",
+      userId: "U-101",
+      name: "Aarav Mehta",
       role: "ADMIN",
-      email: "admin@nhai.gov.in",
+      email: "aarav.mehta@nhai.gov",
     },
     {
-      userId: "U-010",
-      name: "Vendor Alpha",
+      userId: "U-102",
+      name: "Neha Kapoor",
       role: "MAINTENANCE",
-      email: "support@vendoralpha.com",
+      email: "neha.kapoor@nhai.gov",
     },
   ],
   pilotFramework: {
-    pilotId: "PILOT-001",
+    pilotId: "Pilot-NH44",
     zoneId: "NH44-Z01",
-    kpis: ["uptime_pct", "fault_response_time_min", "energy_savings_pct"],
+    kpis: ["Uptime", "Energy Savings", "Response Time"],
     durationMonths: 6,
     successThresholds: {
-      uptime_pct: 99,
-      fault_response_time_min: 120,
-      energy_savings_pct: 20,
+      uptimePct: 99,
+      energySavingsPct: 20,
+      responseTimeMinutes: 90,
     },
   },
 };
-
-export type MockData = typeof mockData;

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
-import type { Asset, Telemetry } from "@/types/data";
+import type { Asset, Telemetry, Zone } from "@/types/data";
 
 const getMarkerColor = (state?: Telemetry["state"]) => {
   if (state === "FAULT") return "#ff5a3d";
@@ -14,6 +14,7 @@ const getMarkerColor = (state?: Telemetry["state"]) => {
 type MapPanelProps = {
   assets: Asset[];
   telemetry: Telemetry[];
+  zones: Zone[];
   selectedPoleId?: string | null;
   onSelectPole: (poleId: string) => void;
 };
@@ -21,12 +22,14 @@ type MapPanelProps = {
 export default function MapPanel({
   assets,
   telemetry,
+  zones,
   selectedPoleId,
   onSelectPole,
 }: MapPanelProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Record<string, L.CircleMarker>>({});
+  const zoneCirclesRef = useRef<Record<string, L.Circle>>({});
 
   const telemetryByPole = useMemo(
     () => new Map(telemetry.map((item) => [item.poleId, item])),
@@ -54,7 +57,32 @@ export default function MapPanel({
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    map.setView([center.lat, center.lng], map.getZoom());
+    const bounds = L.latLngBounds([]);
+    assets.forEach((asset) => bounds.extend([asset.gps.lat, asset.gps.lng]));
+    zones.forEach((zone) => bounds.extend([zone.latitude, zone.longitude]));
+
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [40, 40] });
+    } else {
+      map.setView([center.lat, center.lng], map.getZoom());
+    }
+
+    Object.values(zoneCirclesRef.current).forEach((circle) => circle.remove());
+    zoneCirclesRef.current = {};
+
+    zones.forEach((zone) => {
+      const radiusMeters = (zone.lengthKm * 1000) / 2;
+      const circle = L.circle([zone.latitude, zone.longitude], {
+        radius: radiusMeters,
+        color: "#4b5563",
+        weight: 1,
+        fillColor: "#94a3b8",
+        fillOpacity: 0.12,
+      });
+
+      circle.addTo(map);
+      zoneCirclesRef.current[zone.zoneId] = circle;
+    });
 
     Object.values(markersRef.current).forEach((marker) => marker.remove());
     markersRef.current = {};
@@ -74,7 +102,15 @@ export default function MapPanel({
       marker.addTo(map);
       markersRef.current[asset.poleId] = marker;
     });
-  }, [assets, center.lat, center.lng, onSelectPole, selectedPoleId, telemetryByPole]);
+  }, [
+    assets,
+    center.lat,
+    center.lng,
+    onSelectPole,
+    selectedPoleId,
+    telemetryByPole,
+    zones,
+  ]);
 
   return (
     <div className="map-wrapper">
