@@ -27,6 +27,7 @@ export default function MapPanel({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Record<string, L.CircleMarker>>({});
+  const boundsKeyRef = useRef<string>("");
 
   const telemetryByPole = useMemo(
     () => new Map(telemetry.map((item) => [item.poleId, item])),
@@ -54,6 +55,13 @@ export default function MapPanel({
     const map = mapInstanceRef.current;
     if (!map) return;
 
+    const boundsKey = assets
+      .map((asset) => `${asset.poleId}:${asset.gps.lat.toFixed(6)}:${asset.gps.lng.toFixed(6)}`)
+      .sort()
+      .join("|");
+    if (boundsKey === boundsKeyRef.current) return;
+    boundsKeyRef.current = boundsKey;
+
     const bounds = L.latLngBounds([]);
     assets.forEach((asset) => bounds.extend([asset.gps.lat, asset.gps.lng]));
 
@@ -62,6 +70,11 @@ export default function MapPanel({
     } else {
       map.setView([center.lat, center.lng], map.getZoom());
     }
+  }, [assets, center.lat, center.lng]);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
 
     Object.values(markersRef.current).forEach((marker) => marker.remove());
     markersRef.current = {};
@@ -81,7 +94,7 @@ export default function MapPanel({
       marker.addTo(map);
       markersRef.current[asset.poleId] = marker;
     });
-  }, [assets, center.lat, center.lng, onSelectPole, selectedPoleId, telemetryByPole]);
+  }, [assets, onSelectPole, selectedPoleId, telemetryByPole]);
 
   return (
     <div className="map-wrapper">

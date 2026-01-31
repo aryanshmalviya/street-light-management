@@ -71,6 +71,19 @@ export default function LiveMapPage() {
   >([]);
   const [lightsLoading, setLightsLoading] = useState(false);
   const [lightsError, setLightsError] = useState<string | null>(null);
+  const [poleDetails, setPoleDetails] = useState<{
+    pole_id: string;
+    zone_id: string;
+    controller_id: string | number | null;
+    fixture_type: string | null;
+    installed_on: string | null;
+    status: string | null;
+    gps_lat: string | number | null;
+    gps_lng: string | number | null;
+    wattage: string | number | null;
+    pole_height: string | number | null;
+  } | null>(null);
+  const [poleDetailsError, setPoleDetailsError] = useState<string | null>(null);
   const [editingZone, setEditingZone] = useState<{
     zone_id: string;
     name: string;
@@ -166,11 +179,6 @@ export default function LiveMapPage() {
   }, [store]);
 
   const latestTimestamp = getLatestTimestamp(store);
-  const selectedTelemetry = selectedPoleId
-    ? getPoleStatus(store, selectedPoleId)
-    : undefined;
-  const selectedFault = selectedPoleId ? getPoleFault(store, selectedPoleId) : undefined;
-
   const trendEnergy = [28, 31, 30, 34, 33, 35, 32];
   const trendUptime = [98.2, 98.6, 99.1, 98.9, 99.4, 99.2, 99.3];
   const trendFaults = [5, 4, 3, 4, 2, 3, 2];
@@ -257,6 +265,46 @@ export default function LiveMapPage() {
     };
     loadLights();
   }, [selectedZoneId]);
+
+  useEffect(() => {
+    const loadPoleDetails = async () => {
+      if (!selectedPoleId) {
+        setPoleDetails(null);
+        return;
+      }
+      try {
+        setPoleDetailsError(null);
+        const response = await fetch(
+          `http://localhost:3000/api/lights/${encodeURIComponent(selectedPoleId)}`
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to load pole: ${response.status}`);
+        }
+        const payload = (await response.json()) as {
+          success?: boolean;
+          data?: {
+            pole_id: string;
+            zone_id: string;
+            controller_id: string | number | null;
+            fixture_type: string | null;
+            installed_on: string | null;
+            status: string | null;
+            gps_lat: string | number | null;
+            gps_lng: string | number | null;
+            wattage: string | number | null;
+            pole_height: string | number | null;
+          };
+        };
+        if (!payload.success || !payload.data) {
+          throw new Error("Invalid pole response");
+        }
+        setPoleDetails(payload.data);
+      } catch (error) {
+        setPoleDetailsError(error instanceof Error ? error.message : "Failed to load pole");
+      }
+    };
+    loadPoleDetails();
+  }, [selectedPoleId]);
 
   const zoneAssets: Asset[] = apiLights
     .map((light) => {
@@ -641,36 +689,44 @@ export default function LiveMapPage() {
             <h3>Current Status</h3>
             <div className="detail-row">
               <span>State</span>
-              <strong>{selectedTelemetry?.state ?? "—"}</strong>
+              <strong>{poleDetails?.status ?? "—"}</strong>
             </div>
             <div className="detail-row">
-              <span>Power</span>
-              <strong>{selectedTelemetry?.powerW ?? "—"} W</strong>
+              <span>Wattage</span>
+              <strong>{poleDetails?.wattage ?? "—"} W</strong>
             </div>
             <div className="detail-row">
-              <span>Energy</span>
-              <strong>{selectedTelemetry?.energyKwh ?? "—"} kWh</strong>
+              <span>Pole Height</span>
+              <strong>{poleDetails?.pole_height ?? "—"} m</strong>
             </div>
             <div className="detail-row">
-              <span>Temperature</span>
-              <strong>{selectedTelemetry?.temperatureC ?? "—"} °C</strong>
+              <span>Controller</span>
+              <strong>{poleDetails?.controller_id ?? "—"}</strong>
             </div>
           </div>
 
           <div className="detail-card">
             <h3>Reliability</h3>
             <div className="detail-row">
-              <span>Fault Code</span>
-              <strong>{selectedFault?.faultCode ?? "None"}</strong>
+              <span>Installed On</span>
+              <strong>{poleDetails?.installed_on ?? "—"}</strong>
             </div>
             <div className="detail-row">
-              <span>Severity</span>
-              <strong>{selectedFault?.severity ?? "—"}</strong>
+              <span>Fixture Type</span>
+              <strong>{poleDetails?.fixture_type ?? "—"}</strong>
             </div>
             <div className="detail-row">
-              <span>Detected</span>
-              <strong>{selectedFault?.detectedAt ?? "—"}</strong>
+              <span>GPS</span>
+              <strong>
+                {poleDetails?.gps_lat ?? "—"}, {poleDetails?.gps_lng ?? "—"}
+              </strong>
             </div>
+            {poleDetailsError ? (
+              <div className="detail-row">
+                <span>API Error</span>
+                <strong>{poleDetailsError}</strong>
+              </div>
+            ) : null}
           </div>
 
           <div className="detail-card">

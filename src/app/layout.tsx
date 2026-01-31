@@ -29,7 +29,6 @@ const navItems = [
   { href: "/energy-emissions", label: "Energy" },
   { href: "/environmental-impact", label: "Impact" },
   { href: "/maintenance-sla", label: "Maintenance" },
-  { href: "/feasibility", label: "Feasibility" },
   { href: "/comparative-evaluation", label: "Comparison" },
   { href: "/implementation-model", label: "Implementation" },
   { href: "/pilot-deployment", label: "Pilot" },
