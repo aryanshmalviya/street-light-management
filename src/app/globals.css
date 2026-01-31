@@ -723,6 +723,23 @@ a {
   padding: 8px 10px;
 }
 
+.map-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.map-status {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.map-status.error {
+  color: var(--danger);
+}
+
 .filter-field select:focus-visible,
 .filter-field input:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);

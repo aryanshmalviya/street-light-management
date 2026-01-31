@@ -54,6 +54,23 @@ export default function LiveMapPage() {
   >([]);
   const [zonesLoading, setZonesLoading] = useState(true);
   const [zonesError, setZonesError] = useState<string | null>(null);
+  const [selectedZoneId, setSelectedZoneId] = useState<string>("");
+  const [apiLights, setApiLights] = useState<
+    {
+      pole_id: string;
+      zone_id: string;
+      controller_id: string | number | null;
+      fixture_type: string | null;
+      installed_on: string | null;
+      status: string | null;
+      gps_lat: string | number | null;
+      gps_lng: string | number | null;
+      wattage: string | number | null;
+      pole_height: string | number | null;
+    }[]
+  >([]);
+  const [lightsLoading, setLightsLoading] = useState(false);
+  const [lightsError, setLightsError] = useState<string | null>(null);
   const [editingZone, setEditingZone] = useState<{
     zone_id: string;
     name: string;
@@ -78,6 +95,16 @@ export default function LiveMapPage() {
     zoneName: "",
     highwaySection: "",
     poles: "",
+  });
+  const [isLightOpen, setIsLightOpen] = useState(false);
+  const [lightForm, setLightForm] = useState({
+    zoneName: "",
+    controllerId: "1",
+    latitude: "",
+    longitude: "",
+    wattage: "",
+    poleHeight: "",
+    status: "operational",
   });
 
   const addPoleForZone = (zone: Zone) => {
@@ -178,6 +205,9 @@ export default function LiveMapPage() {
           throw new Error("Invalid zones response");
         }
         setApiZones(payload.data);
+        if (payload.data.length > 0) {
+          setSelectedZoneId(payload.data[0].zone_id);
+        }
       } catch (error) {
         setZonesError(error instanceof Error ? error.message : "Failed to load zones");
       } finally {
@@ -187,6 +217,83 @@ export default function LiveMapPage() {
     loadZones();
   }, []);
 
+  useEffect(() => {
+    const loadLights = async () => {
+      if (!selectedZoneId) return;
+      try {
+        setLightsLoading(true);
+        setLightsError(null);
+        const response = await fetch(
+          `http://localhost:3000/api/lights?zoneId=${encodeURIComponent(selectedZoneId)}`
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to load lights: ${response.status}`);
+        }
+        const payload = (await response.json()) as {
+          success?: boolean;
+          data?: {
+            pole_id: string;
+            zone_id: string;
+            controller_id: string | number | null;
+            fixture_type: string | null;
+            installed_on: string | null;
+            status: string | null;
+            gps_lat: string | number | null;
+            gps_lng: string | number | null;
+            wattage: string | number | null;
+            pole_height: string | number | null;
+          }[];
+        };
+        if (!payload.success || !payload.data) {
+          throw new Error("Invalid lights response");
+        }
+        setApiLights(payload.data);
+        setSelectedPoleId(payload.data[0]?.pole_id ?? null);
+      } catch (error) {
+        setLightsError(error instanceof Error ? error.message : "Failed to load lights");
+      } finally {
+        setLightsLoading(false);
+      }
+    };
+    loadLights();
+  }, [selectedZoneId]);
+
+  const zoneAssets: Asset[] = apiLights
+    .map((light) => {
+      const lat = Number(light.gps_lat);
+      const lng = Number(light.gps_lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+      }
+      const status =
+        light.status === "inactive" || light.status === "offline"
+          ? "INACTIVE"
+          : light.status === "maintenance"
+            ? "MAINTENANCE"
+            : "ACTIVE";
+      return {
+        poleId: light.pole_id,
+        zoneId: light.zone_id,
+        gps: { lat, lng },
+        fixtureType: light.fixture_type ?? "LED-120W",
+        controllerId: light.controller_id ? String(light.controller_id) : "CTRL-000",
+        installedOn: light.installed_on ?? "2026-01-30",
+        status,
+      };
+    })
+    .filter((item): item is Asset => item !== null);
+
+  const zoneTelemetry: Telemetry[] = zoneAssets.map((asset, index) => ({
+    poleId: asset.poleId,
+    timestamp: new Date().toISOString(),
+    state: asset.status === "INACTIVE" ? "OFF" : "ON",
+    voltage: 228.5 + (index % 4) * 0.3,
+    current: 0.45 + (index % 4) * 0.02,
+    powerW: 100 + (index % 5) * 5,
+    energyKwh: 1.8 + (index % 6) * 0.12,
+    ambientLux: 12 + (index % 10),
+    temperatureC: 30.8 + (index % 6) * 0.3,
+  }));
   const handleTicketChange = (
     event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -302,6 +409,50 @@ export default function LiveMapPage() {
       );
     }
   };
+
+  const handleLightChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = event.target;
+    setLightForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const submitLight = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const selectedZone = apiZones.find((zone) => zone.name === lightForm.zoneName);
+    if (!selectedZone) {
+      setToast("Please select a valid zone.");
+      return;
+    }
+    const payload = {
+      zone_id: selectedZone.zone_id,
+      controller_id: Number(lightForm.controllerId),
+      gps_lat: Number(lightForm.latitude),
+      gps_lng: Number(lightForm.longitude),
+      wattage: Number(lightForm.wattage),
+      pole_height: Number(lightForm.poleHeight),
+      status: lightForm.status,
+    };
+    try {
+      const response = await fetch("http://localhost:3000/api/lights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Request failed: ${response.status} ${errorText}`);
+      }
+      setToast(
+        `Light created: zone_id=${payload.zone_id} | controller_id=${payload.controller_id}`
+      );
+      setIsLightOpen(false);
+    } catch (error) {
+      setToast(
+        error instanceof Error ? error.message : "Failed to create light. Please try again."
+      );
+    }
+  };
   return (
     <div className="dashboard">
       <section className="hero">
@@ -373,6 +524,9 @@ export default function LiveMapPage() {
               <h2>Live Map</h2>
               <p>Click a pole to inspect KPIs and maintenance status.</p>
             </div>
+            <button className="secondary-btn" type="button" onClick={() => setIsLightOpen(true)}>
+              Add Pole
+            </button>
             <div className="legend">
               <span className="legend-item ok">On</span>
               <span className="legend-item warn">Dimmed</span>
@@ -380,10 +534,27 @@ export default function LiveMapPage() {
               <span className="legend-item off">Offline</span>
             </div>
           </div>
+          <div className="map-toolbar">
+            <label className="filter-field">
+              <span>Zone</span>
+              <select
+                value={selectedZoneId}
+                onChange={(event) => setSelectedZoneId(event.target.value)}
+                disabled={zonesLoading || apiZones.length === 0}
+              >
+                {apiZones.map((zone) => (
+                  <option key={zone.zone_id} value={zone.zone_id}>
+                    {zone.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {lightsLoading ? <span className="map-status">Loading poles…</span> : null}
+            {lightsError ? <span className="map-status error">{lightsError}</span> : null}
+          </div>
           <MapPanel
-            assets={store.assets}
-            telemetry={store.telemetry}
-            zones={store.zones}
+            assets={zoneAssets}
+            telemetry={zoneTelemetry}
             selectedPoleId={selectedPoleId}
             onSelectPole={setSelectedPoleId}
           />
@@ -720,6 +891,110 @@ export default function LiveMapPage() {
                   Update Zone
                 </button>
                 <button className="ghost-btn" type="button" onClick={() => setEditingZone(null)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+      {isLightOpen ? (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3>Create Pole</h3>
+              <button className="ghost-btn" type="button" onClick={() => setIsLightOpen(false)}>
+                Close
+              </button>
+            </div>
+            <form className="modal-form" onSubmit={submitLight}>
+              <label className="form-field">
+                <span>Zone ID</span>
+                <select
+                  name="zoneName"
+                  value={lightForm.zoneName}
+                  onChange={handleLightChange}
+                  required
+                >
+                  <option value="" disabled>
+                    Select zone
+                  </option>
+                  {apiZones.map((zone) => (
+                    <option key={zone.zone_id} value={zone.name}>
+                      {zone.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="form-field">
+                <span>Controller ID</span>
+                <select
+                  name="controllerId"
+                  value={lightForm.controllerId}
+                  onChange={handleLightChange}
+                >
+                  {Array.from({ length: 10 }, (_, index) => (
+                    <option key={index + 1} value={String(index + 1)}>
+                      {index + 1}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="form-field">
+                <span>Latitude</span>
+                <input
+                  name="latitude"
+                  value={lightForm.latitude}
+                  onChange={handleLightChange}
+                  placeholder="28.5355"
+                  required
+                />
+              </label>
+              <label className="form-field">
+                <span>Longitude</span>
+                <input
+                  name="longitude"
+                  value={lightForm.longitude}
+                  onChange={handleLightChange}
+                  placeholder="77.3910"
+                  required
+                />
+              </label>
+              <label className="form-field">
+                <span>Wattage</span>
+                <input
+                  name="wattage"
+                  value={lightForm.wattage}
+                  onChange={handleLightChange}
+                  placeholder="100"
+                  required
+                />
+              </label>
+              <label className="form-field">
+                <span>Pole Height</span>
+                <input
+                  name="poleHeight"
+                  value={lightForm.poleHeight}
+                  onChange={handleLightChange}
+                  placeholder="10.5"
+                  required
+                />
+              </label>
+              <label className="form-field">
+                <span>Status</span>
+                <input
+                  name="status"
+                  value={lightForm.status}
+                  onChange={handleLightChange}
+                  placeholder="operational"
+                  required
+                />
+              </label>
+              <div className="modal-actions">
+                <button className="primary-btn" type="submit">
+                  Submit Pole
+                </button>
+                <button className="ghost-btn" type="button" onClick={() => setIsLightOpen(false)}>
                   Cancel
                 </button>
               </div>
