@@ -2,16 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import toast from "react-hot-toast";
 import MapPanel from "@/components/map-panel";
 import Sparkline from "@/components/sparkline";
 import { mockData } from "@/data/mock-data";
-import type { Asset, DataStore, Telemetry, Zone } from "@/types/data";
+import type { Asset, DataStore, Telemetry } from "@/types/data";
 import {
   getActiveFaults,
   getAvgResponseTimeMinutes,
   getLatestTimestamp,
-  getPoleFault,
-  getPoleStatus,
   getSlaCompliancePct,
   getUptimePct,
   getZoneEnergy,
@@ -19,29 +18,10 @@ import {
 
 const createStore = () => JSON.parse(JSON.stringify(mockData)) as DataStore;
 
-const pad3 = (value: number) => String(value).padStart(3, "0");
-
-const sampleWithinBounds = (zone: Zone) => {
-  const delta = zone.lengthKm / 2 / 111.32;
-  const lat = zone.latitude + (Math.random() * 2 - 1) * delta;
-  const lng = zone.longitude + (Math.random() * 2 - 1) * delta;
-  return { lat, lng };
-};
-
-const getNextPoleNumber = (assets: Asset[]) => {
-  const maxNum = assets.reduce((max, asset) => {
-    const match = asset.poleId.match(/(\d+)$/);
-    const num = match ? Number(match[1]) : 0;
-    return Number.isNaN(num) ? max : Math.max(max, num);
-  }, 0);
-  return maxNum + 1;
-};
-
 export default function LiveMapPage() {
   const [store, setStore] = useState<DataStore>(createStore);
   const [selectedPoleId, setSelectedPoleId] = useState(store.assets[0]?.poleId);
   const [isTicketOpen, setIsTicketOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
   const [apiZones, setApiZones] = useState<
     {
       zone_id: string;
@@ -94,14 +74,8 @@ export default function LiveMapPage() {
     poles: "",
   });
   const [ticketForm, setTicketForm] = useState({
-    lightId: "",
-    sectionId: "",
-    maintenanceType: "",
-    scheduledDate: "",
-    completedDate: "",
-    status: "pending",
-    assignedTo: "",
-    notes: "",
+    ticketDesc: "",
+    slaHours: "24",
   });
   const [isZoneOpen, setIsZoneOpen] = useState(false);
   const [zoneForm, setZoneForm] = useState({
@@ -120,52 +94,6 @@ export default function LiveMapPage() {
     status: "operational",
   });
 
-  const addPoleForZone = (zone: Zone) => {
-    const { lat, lng } = sampleWithinBounds(zone);
-    const nextNumber = getNextPoleNumber(store.assets);
-    const poleId = `NH44-P${pad3(nextNumber)}`;
-    const controllerId = `CTRL-${pad3(nextNumber)}`;
-    const newAsset: Asset = {
-      poleId,
-      zoneId: zone.zoneId,
-      gps: { lat, lng },
-      fixtureType: "LED-120W",
-      controllerId,
-      installedOn: "2026-01-30",
-      status: "ACTIVE",
-    };
-    const newTelemetry: Telemetry = {
-      poleId,
-      timestamp: new Date().toISOString(),
-      state: "ON",
-      voltage: 229.2,
-      current: 0.48,
-      powerW: 110.4,
-      energyKwh: 2.1,
-      ambientLux: 14,
-      temperatureC: 31.2,
-    };
-
-    setStore((prev) => ({
-      ...prev,
-      zones: prev.zones.map((item) =>
-        item.zoneId === zone.zoneId ? { ...item, poles: item.poles + 1 } : item
-      ),
-      assets: [...prev.assets, newAsset],
-      controllers: [
-        ...prev.controllers,
-        {
-          controllerId,
-          firmware: "v1.2.3",
-          lastSeen: new Date().toISOString(),
-          connectivity: "4G",
-        },
-      ],
-      telemetry: [...prev.telemetry, newTelemetry],
-    }));
-    setSelectedPoleId(poleId);
-  };
-
   const kpis = useMemo(() => {
     const energy = getZoneEnergy(store);
     return {
@@ -182,12 +110,6 @@ export default function LiveMapPage() {
   const trendEnergy = [28, 31, 30, 34, 33, 35, 32];
   const trendUptime = [98.2, 98.6, 99.1, 98.9, 99.4, 99.2, 99.3];
   const trendFaults = [5, 4, 3, 4, 2, 3, 2];
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 3000);
-    return () => clearTimeout(timer);
-  }, [toast]);
 
   useEffect(() => {
     const loadZones = async () => {
@@ -395,12 +317,10 @@ export default function LiveMapPage() {
             : zone
         )
       );
-      setToast(
-        `Zone updated: zone_name=${payload.zone_name} | poles=${payload.poles}`
-      );
+      toast.success(`Zone updated: zone_name=${payload.zone_name} | poles=${payload.poles}`);
       setEditingZone(null);
     } catch (error) {
-      setToast(
+      toast.error(
         error instanceof Error ? error.message : "Failed to update zone. Please try again."
       );
     }
@@ -408,18 +328,36 @@ export default function LiveMapPage() {
 
   const submitTicket = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const summary = [
-      `light_id=${ticketForm.lightId || "—"}`,
-      `section_id=${ticketForm.sectionId || "—"}`,
-      `maintenance_type=${ticketForm.maintenanceType || "—"}`,
-      `scheduled_date=${ticketForm.scheduledDate || "—"}`,
-      `completed_date=${ticketForm.completedDate || "—"}`,
-      `status=${ticketForm.status || "—"}`,
-      `assigned_to=${ticketForm.assignedTo || "—"}`,
-      `notes=${ticketForm.notes || "—"}`,
-    ].join(" | ");
-    setToast(`Maintenance ticket created: ${summary}`);
-    setIsTicketOpen(false);
+    const poleId = poleDetails?.pole_id ?? selectedPoleId ?? "";
+    const zoneId = poleDetails?.zone_id ?? "";
+    const payload = {
+      ticket_desc: ticketForm.ticketDesc,
+      pole_id: poleId,
+      zone_id: zoneId,
+      sla_hours: Number(ticketForm.slaHours),
+    };
+    if (!poleId || !zoneId) {
+      toast.error("Select a pole to create a maintenance ticket.");
+      return;
+    }
+    fetch("http://localhost:3000/api/maintenance/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Request failed: ${response.status} ${errorText}`);
+        }
+        toast.success(
+          `Maintenance ticket created: pole_id=${payload.pole_id} | zone_id=${payload.zone_id} | sla_hours=${payload.sla_hours}`
+        );
+        setIsTicketOpen(false);
+      })
+      .catch((error) => {
+        toast.error(error instanceof Error ? error.message : "Failed to create ticket.");
+      });
   };
 
   const handleZoneChange = (
@@ -447,12 +385,12 @@ export default function LiveMapPage() {
         const errorText = await response.text();
         throw new Error(`Request failed: ${response.status} ${errorText}`);
       }
-      setToast(
+      toast.success(
         `Zone created: zone_name=${payload.zone_name} | highway_section=${payload.highway_section} | poles=${payload.poles}`
       );
       setIsZoneOpen(false);
     } catch (error) {
-      setToast(
+      toast.error(
         error instanceof Error ? error.message : "Failed to create zone. Please try again."
       );
     }
@@ -469,7 +407,7 @@ export default function LiveMapPage() {
     event.preventDefault();
     const selectedZone = apiZones.find((zone) => zone.name === lightForm.zoneName);
     if (!selectedZone) {
-      setToast("Please select a valid zone.");
+      toast.error("Please select a valid zone.");
       return;
     }
     const payload = {
@@ -491,12 +429,12 @@ export default function LiveMapPage() {
         const errorText = await response.text();
         throw new Error(`Request failed: ${response.status} ${errorText}`);
       }
-      setToast(
+      toast.success(
         `Light created: zone_id=${payload.zone_id} | controller_id=${payload.controller_id}`
       );
       setIsLightOpen(false);
     } catch (error) {
-      setToast(
+      toast.error(
         error instanceof Error ? error.message : "Failed to create light. Please try again."
       );
     }
@@ -768,76 +706,32 @@ export default function LiveMapPage() {
             </div>
             <form className="modal-form" onSubmit={submitTicket}>
               <label className="form-field">
-                <span>Light ID</span>
-                <input
-                  name="lightId"
-                  value={ticketForm.lightId}
-                  onChange={handleTicketChange}
-                  placeholder="e.g. 101"
-                />
-              </label>
-              <label className="form-field">
-                <span>Section ID</span>
-                <input
-                  name="sectionId"
-                  value={ticketForm.sectionId}
-                  onChange={handleTicketChange}
-                  placeholder="e.g. 44"
-                />
-              </label>
-              <label className="form-field">
-                <span>Maintenance Type</span>
-                <input
-                  name="maintenanceType"
-                  value={ticketForm.maintenanceType}
-                  onChange={handleTicketChange}
-                  placeholder="Routine check"
-                />
-              </label>
-              <label className="form-field">
-                <span>Scheduled Date</span>
-                <input
-                  name="scheduledDate"
-                  type="datetime-local"
-                  value={ticketForm.scheduledDate}
-                  onChange={handleTicketChange}
-                />
-              </label>
-              <label className="form-field">
-                <span>Completed Date</span>
-                <input
-                  name="completedDate"
-                  type="datetime-local"
-                  value={ticketForm.completedDate}
-                  onChange={handleTicketChange}
-                />
-              </label>
-              <label className="form-field">
-                <span>Status</span>
-                <select name="status" value={ticketForm.status} onChange={handleTicketChange}>
-                  <option value="pending">pending</option>
-                  <option value="in_progress">in_progress</option>
-                  <option value="completed">completed</option>
-                </select>
-              </label>
-              <label className="form-field">
-                <span>Assigned To</span>
-                <input
-                  name="assignedTo"
-                  value={ticketForm.assignedTo}
-                  onChange={handleTicketChange}
-                  placeholder="User ID"
-                />
-              </label>
-              <label className="form-field">
-                <span>Notes</span>
+                <span>Ticket Description</span>
                 <textarea
-                  name="notes"
+                  name="ticketDesc"
                   rows={3}
-                  value={ticketForm.notes}
+                  value={ticketForm.ticketDesc}
                   onChange={handleTicketChange}
-                  placeholder="Notes"
+                  placeholder="Lamp not working - street light pole #42"
+                  required
                 />
+              </label>
+              <label className="form-field">
+                <span>Pole ID</span>
+                <input value={poleDetails?.pole_id ?? selectedPoleId ?? ""} disabled />
+              </label>
+              <label className="form-field">
+                <span>Zone ID</span>
+                <input value={poleDetails?.zone_id ?? ""} disabled />
+              </label>
+              <label className="form-field">
+                <span>SLA Hours</span>
+                <select name="slaHours" value={ticketForm.slaHours} onChange={handleTicketChange}>
+                  <option value="12">12</option>
+                  <option value="24">24</option>
+                  <option value="48">48</option>
+                  <option value="72">72</option>
+                </select>
               </label>
               <div className="modal-actions">
                 <button className="primary-btn" type="submit">
@@ -855,7 +749,6 @@ export default function LiveMapPage() {
           </div>
         </div>
       ) : null}
-      {toast ? <div className="toast">{toast}</div> : null}
       {isZoneOpen ? (
         <div className="modal-backdrop" role="dialog" aria-modal="true">
           <div className="modal-card">
